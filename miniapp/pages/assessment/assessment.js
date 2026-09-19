@@ -9,15 +9,21 @@ const questions = [
 ];
 
 Page({
-  data: { mode:"color", photo:"", checks:{face:false,glasses:false,light:false}, analyzing:false, colorResult:null, step:0,
+  data: { mode:"color", photo:"", checks:{face:false,glasses:false,light:false}, analyzing:false, visionAvailable:null, colorResult:null, step:0,
     metrics:{height:"",weight:"",shoulder:"",waist:"",hip:""}, questions, current:null, answers:{}, bodyResult:null,
     checkItems:[{k:"face",t:"额头与下巴完整露出"},{k:"glasses",t:"已摘下眼镜和帽子"},{k:"light",t:"自然光、无滤镜"}],
     metricItems:[{k:"height",t:"身高",u:"cm"},{k:"weight",t:"体重",u:"kg"},{k:"shoulder",t:"肩围",u:"cm"},{k:"waist",t:"腰围",u:"cm"},{k:"hip",t:"臀围",u:"cm"}]
+  },
+  onLoad(){ this.loadVisionStatus(); },
+  async loadVisionStatus(){
+    try{const data=await request("/api/analyze-photo");this.setData({visionAvailable:Boolean(data.available)});}
+    catch(_){this.setData({visionAvailable:null});}
   },
   setMode(e){ this.setData({mode:e.currentTarget.dataset.mode}); },
   choosePhoto(){ wx.chooseMedia({count:1,mediaType:["image"],sourceType:["album","camera"],success:({tempFiles})=>this.setData({photo:tempFiles[0].tempFilePath,colorResult:null})}); },
   toggle(e){ const key=e.currentTarget.dataset.key; this.setData({[`checks.${key}`]:!this.data.checks[key]}); },
   async analyzeColor(){
+    if(this.data.visionAvailable===false) return wx.showToast({title:"照片分析功能正在接入中",icon:"none"});
     if(!this.data.photo || !Object.values(this.data.checks).every(Boolean)) return wx.showToast({title:"请完成照片确认",icon:"none"});
     this.setData({analyzing:true});
     try {
