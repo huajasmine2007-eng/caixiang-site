@@ -1,0 +1,21 @@
+<view class="page safe-bottom">
+  <view wx:if="{{success}}" class="success card">
+    <text class="success-mark">✓</text><text class="success-ko">예약 신청이 완료되었어요</text><text class="success-zh">预约申请已提交</text>
+    <text class="muted">工作人员确认时间后会通过你填写的联系方式联系你。</text>
+    <button class="submit" bindtap="backHome">返回首页</button>
+  </view>
+  <block wx:else>
+    <text class="eyebrow">APPOINTMENT</text><text class="title">서비스 예약</text><text class="zh">预约彩相美学服务</text>
+    <view class="selected"><text>已选项目</text><text>{{serviceName}}</text></view>
+    <view class="form card">
+      <label><text>姓名</text><input data-key="contactName" bindinput="input" value="{{contactName}}" placeholder="请输入姓名"/></label>
+      <label><text>微信号或手机号</text><input data-key="contactMethod" bindinput="input" value="{{contactMethod}}" placeholder="用于确认预约"/></label>
+      <label><text>期望日期</text><picker mode="date" value="{{preferredDate}}" bindchange="pickDate"><view class="picker {{preferredDate?'':'placeholder'}}">{{preferredDate||'请选择日期'}}　›</view></picker></label>
+      <label><text>期望时段</text><picker range="{{timeOptions}}" value="{{timeIndex}}" bindchange="pickTime"><view class="picker">{{timeOptions[timeIndex]}}　›</view></picker></label>
+      <label><text>服务地点</text><picker range="{{cityOptions}}" value="{{cityIndex}}" bindchange="pickCity"><view class="picker">{{cityOptions[cityIndex]}}　›</view></picker></label>
+      <label><text>补充说明（选填）</text><textarea data-key="note" bindinput="input" value="{{note}}" maxlength="300" placeholder="如同行人数、希望解决的问题等"/></label>
+    </view>
+    <button class="submit" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">예약 신청　提交预约</button>
+    <text class="privacy">提交即表示同意工作人员仅将以上信息用于本次预约联系。</text>
+  </block>
+</view>
