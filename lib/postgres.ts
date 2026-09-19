@@ -36,6 +36,14 @@ export function ensureSchema() {
         id text PRIMARY KEY, user_id text NOT NULL, filename text NOT NULL,
         imported_count integer NOT NULL, created_at bigint NOT NULL
       )`;
+      await db`CREATE TABLE IF NOT EXISTS appointments (
+        id text PRIMARY KEY, user_id text NOT NULL, service_name text NOT NULL,
+        contact_name text NOT NULL, contact_method text NOT NULL,
+        preferred_date text NOT NULL, preferred_time text NOT NULL,
+        city text NOT NULL, note text, status text NOT NULL DEFAULT 'pending',
+        created_at bigint NOT NULL
+      )`;
+      await db`CREATE INDEX IF NOT EXISTS appointment_user_time ON appointments (user_id, created_at DESC)`;
     })().catch((error) => { ready = null; throw error; });
   }
   return ready;
