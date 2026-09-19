@@ -5,7 +5,8 @@
     <text class="step">STEP 01 · PHOTO</text><text class="section-title">정면 사진 업로드</text><text class="section-zh">上传面部正面照</text>
     <view class="photo" bindtap="choosePhoto"><image wx:if="{{photo}}" src="{{photo}}" mode="aspectFill"/><view wx:else><text class="plus">＋</text><text>拍照或从相册选择</text></view></view>
     <view wx:if="{{photo}}" class="checks"><view wx:for="{{checkItems}}" wx:key="k" data-key="{{item.k}}" bindtap="toggle" class="check"><text class="box {{checks[item.k]?'checked':''}}">✓</text>{{item.t}}</view></view>
-    <button class="action" loading="{{analyzing}}" bindtap="analyzeColor">사진 분석 시작　开始分析</button>
+    <view wx:if="{{visionAvailable===false}}" class="api-note">视觉分析服务正在接入中。你可以先完成体型测试和数字形象档案，照片会保留在当前设备中。</view>
+    <button class="action" loading="{{analyzing}}" disabled="{{visionAvailable===false}}" bindtap="analyzeColor">{{visionAvailable===false?'분석 준비 중　分析接入中':'사진 분석 시작　开始分析'}}</button>
     <view wx:if="{{colorResult}}" class="result"><text class="eyebrow">AESTHETIC PROFILE</text><text class="result-main">{{colorResult.season}}</text><text class="result-sub">{{colorResult.type}}</text><text class="muted">视觉模型置信度 {{colorResult.confidence}}%</text></view>
   </view>
   <view wx:else class="panel light">
