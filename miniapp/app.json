@@ -6,7 +6,8 @@
     "pages/profile/profile",
     "pages/history/history",
     "pages/studio/studio",
-    "pages/pricing/pricing"
+    "pages/pricing/pricing",
+    "pages/booking/booking"
   ],
   "window": {
     "navigationBarBackgroundColor": "#f7f7f2",
