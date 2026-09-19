@@ -45,13 +45,18 @@ function getOutputText(payload: unknown) {
   return null;
 }
 
+export async function GET() {
+  const available = Boolean(process.env.OPENAI_API_KEY) && process.env.ENABLE_VISION_ANALYSIS === "true";
+  return json({ available });
+}
+
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return json({ error: "신뢰할 수 없는 요청입니다." }, 403);
   if (!withinRateLimit(request)) return json({ error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." }, 429);
 
   const apiKey = process.env.OPENAI_API_KEY;
   const enabled = process.env.ENABLE_VISION_ANALYSIS === "true";
-  if (!apiKey || !enabled) return json({ available: false, reason: "vision_not_configured" }, 503);
+  if (!apiKey || !enabled) return json({ available: false, reason: "vision_not_configured", error: "照片分析功能正在接入中，请稍后再试。" }, 503);
 
   let formData: FormData;
   try { formData = await request.formData(); } catch { return json({ error: "사진을 불러올 수 없습니다." }, 400); }
