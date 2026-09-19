@@ -1,1 +1,13 @@
-<view class="page safe-bottom"><text class="eyebrow">SERVICE MENU</text><text class="title">서비스 가격</text><text class="zh">彩相美学服务价格</text><view wx:for="{{groups}}" wx:key="ko" class="group"><text class="group-ko">{{item.ko}}</text><text class="group-zh">{{item.zh}}</text><view wx:for="{{item.items}}" wx:key="name" wx:for-item="service" class="line"><text>{{service.name}}</text><text>{{service.price}}</text></view></view><view class="notice">具体服务内容与价格以预约沟通为准。线上初测仅用于建立初始档案，不替代线下专业诊断。</view></view>
+<view class="page safe-bottom">
+  <text class="eyebrow">SERVICE MENU</text><text class="title">서비스 가격</text><text class="zh">彩相美学服务价格</text>
+  <view class="price-head"><text>项目</text><text>原价</text><text class="red">分享价</text><text>会员价</text></view>
+  <view wx:for="{{groups}}" wx:key="ko" class="group">
+    <text class="group-ko">{{item.ko}}</text><text class="group-zh">{{item.zh}}</text>
+    <view wx:for="{{item.items}}" wx:key="name" wx:for-item="service" class="service">
+      <text class="service-ko">{{service.ko}}</text><text class="service-name">{{service.name}}</text>
+      <view class="prices"><text>¥{{service.original}}</text><text class="red">¥{{service.sharing}}</text><text>¥{{service.member}}</text></view>
+      <button class="book" data-service="{{service.name}}" bindtap="book">예약하기　预约 →</button>
+    </view>
+  </view>
+  <view class="notice">首次体验后分享真实体验内容可享分享价；完成首次服务后成为会员，后续服务可享会员价。具体规则以预约确认为准。</view>
+</view>
