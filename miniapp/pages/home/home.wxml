@@ -1,0 +1,12 @@
+<view class="page safe-bottom">
+  <text class="eyebrow">PERSONAL AESTHETIC PROFILE</text>
+  <text class="title">나의 이미지를\n하나의 자산으로</text>
+  <text class="zh">把个人形象，变成可持续更新的资产</text>
+  <image class="hero" src="https://caixianglab.online/hero-color-portrait.png" mode="aspectFill" />
+  <view class="grid">
+    <view wx:for="{{modules}}" wx:key="path" data-path="{{item.path}}" bindtap="open" class="module {{index===0?'dark':''}}">
+      <text class="no">{{item.no}}</text><text class="module-ko">{{item.ko}}</text><text class="module-zh">{{item.zh}}</text><text class="copy">{{item.copy}}</text><text class="arrow">点击进入　→</text>
+    </view>
+  </view>
+  <view class="history" bindtap="history">历史诊断记录　나의 이전 결과 →</view>
+</view>

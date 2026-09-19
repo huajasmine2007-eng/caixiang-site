@@ -1,0 +1,9 @@
+.intro,.swiper { height: 100vh; background:#111; }
+swiper-item { position:relative; }
+.cover,.shade { position:absolute; inset:0; width:100%; height:100%; }
+.shade { background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.08) 40%,rgba(0,0,0,.9)); }
+.brand { position:absolute; top:calc(36rpx + env(safe-area-inset-top)); left:34rpx; display:flex; align-items:center; gap:18rpx; color:#fff; }
+.mark { width:68rpx; height:68rpx; border-radius:50%; background:#fff; color:#111; display:grid; place-items:center; font-weight:700; }
+.brand-ko,.brand-zh,.story text { display:block; }.brand-ko{font-family:Georgia,serif;font-size:30rpx}.brand-zh{font-size:17rpx;opacity:.58;letter-spacing:2rpx;margin-top:5rpx}
+.story { position:absolute; left:38rpx; right:38rpx; bottom:240rpx; color:#fff; }.tag{font-size:19rpx;letter-spacing:4rpx;opacity:.62}.story-ko{font-family:Georgia,serif;font-size:54rpx;line-height:1.15;margin-top:20rpx}.story-zh{font-size:24rpx;opacity:.66;margin-top:14rpx}
+.footer { position:fixed; z-index:4; left:36rpx; right:36rpx; bottom:calc(34rpx + env(safe-area-inset-bottom)); }.dots{display:flex;gap:10rpx;margin-bottom:24rpx}.dot{width:24rpx;height:6rpx;border-radius:6rpx;background:rgba(255,255,255,.35)}.dot.active{width:62rpx;background:#fff}.enter{background:#fff;color:#111;border:0;border-radius:999rpx;font-size:25rpx;padding:9rpx}.enter::after{border:0}

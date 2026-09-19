@@ -3,7 +3,11 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 const COOKIE = "caixiang_session";
 
-function secret() { return process.env.SESSION_SECRET || "local-caixiang-preview-secret"; }
+function secret() {
+  const value = process.env.SESSION_SECRET;
+  if (!value) throw new Error("SESSION_SECRET is not configured");
+  return value;
+}
 function sign(value: string) { return createHmac("sha256", secret()).update(value).digest("base64url"); }
 
 export function createSessionValue(userId: string, role: string) {
@@ -12,7 +16,8 @@ export function createSessionValue(userId: string, role: string) {
 }
 
 export function readSession(request: NextRequest) {
-  const raw = request.cookies.get(COOKIE)?.value;
+  const bearer = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
+  const raw = bearer || request.cookies.get(COOKIE)?.value;
   if (!raw) return null;
   const [payload, signature] = raw.split(".");
   if (!payload || !signature) return null;
@@ -23,6 +28,8 @@ export function readSession(request: NextRequest) {
     return value.exp > Date.now() ? value : null;
   } catch { return null; }
 }
+
+export const createApiToken = createSessionValue;
 
 export const sessionCookieName = COOKIE;
 

@@ -1,0 +1,14 @@
+<view class="intro">
+  <swiper class="swiper" circular autoplay interval="4200" bindchange="change">
+    <swiper-item wx:for="{{slides}}" wx:key="tag">
+      <image class="cover" src="{{item.image}}" mode="aspectFill" />
+      <view class="shade"></view>
+      <view class="brand"><text class="mark">彩</text><view><text class="brand-ko">채상미학</text><text class="brand-zh">彩相美学 · CAIXIANG LAB</text></view></view>
+      <view class="story"><text class="tag">{{item.tag}} · NANJING</text><text class="story-ko">{{item.ko}}</text><text class="story-zh">{{item.zh}}</text></view>
+    </swiper-item>
+  </swiper>
+  <view class="footer">
+    <view class="dots"><text wx:for="{{slides}}" wx:key="tag" class="dot {{index === current ? 'active' : ''}}"></text></view>
+    <button class="enter" bindtap="enter">시작하기　开始使用 →</button>
+  </view>
+</view>

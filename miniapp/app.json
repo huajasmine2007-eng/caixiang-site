@@ -1,0 +1,19 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/home/home",
+    "pages/assessment/assessment",
+    "pages/profile/profile",
+    "pages/history/history",
+    "pages/studio/studio",
+    "pages/pricing/pricing"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#f7f7f2",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "彩相美学",
+    "backgroundColor": "#f7f7f2"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

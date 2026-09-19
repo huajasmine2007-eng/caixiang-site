@@ -1,0 +1,17 @@
+<view class="assessment safe-bottom">
+  <view class="head"><text class="eyebrow">ONLINE INITIAL ASSESSMENT</text><text class="page-title">온라인 간이 진단</text><text class="page-zh">线上初测</text></view>
+  <view class="tabs"><view class="tab {{mode==='color'?'active':''}}" data-mode="color" bindtap="setMode">01 컬러<text>色彩</text></view><view class="tab {{mode==='body'?'active':''}}" data-mode="body" bindtap="setMode">02 체형·골격<text>体型骨骼</text></view></view>
+  <view wx:if="{{mode==='color'}}" class="panel">
+    <text class="step">STEP 01 · PHOTO</text><text class="section-title">정면 사진 업로드</text><text class="section-zh">上传面部正面照</text>
+    <view class="photo" bindtap="choosePhoto"><image wx:if="{{photo}}" src="{{photo}}" mode="aspectFill"/><view wx:else><text class="plus">＋</text><text>拍照或从相册选择</text></view></view>
+    <view wx:if="{{photo}}" class="checks"><view wx:for="{{checkItems}}" wx:key="k" data-key="{{item.k}}" bindtap="toggle" class="check"><text class="box {{checks[item.k]?'checked':''}}">✓</text>{{item.t}}</view></view>
+    <button class="action" loading="{{analyzing}}" bindtap="analyzeColor">사진 분석 시작　开始分析</button>
+    <view wx:if="{{colorResult}}" class="result"><text class="eyebrow">AESTHETIC PROFILE</text><text class="result-main">{{colorResult.season}}</text><text class="result-sub">{{colorResult.type}}</text><text class="muted">视觉模型置信度 {{colorResult.confidence}}%</text></view>
+  </view>
+  <view wx:else class="panel light">
+    <text class="step red">STEP 02 · {{step}}/5</text><text class="section-title">체형·골격 진단</text><text class="section-zh">体型与骨骼测试</text>
+    <view wx:if="{{bodyResult}}" class="result body"><text class="result-main">{{bodyResult.type}} TYPE</text><text class="result-sub">{{bodyResult.frame}}</text><text class="muted">BMI {{bodyResult.bmi}} · 仅作为档案基础数据</text><button class="action blue" bindtap="profile">继续完善数字形象档案 →</button></view>
+    <view wx:elif="{{step===0}}" class="metrics"><view wx:for="{{metricItems}}" wx:key="k" class="field"><text>{{item.t}}</text><input type="digit" data-key="{{item.k}}" value="{{metrics[item.k]}}" bindinput="metric" placeholder="请输入"/><text class="unit">{{item.u}}</text></view><button class="action" bindtap="begin">开始观察题 →</button></view>
+    <view wx:else class="question"><text class="question-ko">{{current.ko}}</text><text class="question-zh">{{current.zh}}</text><view wx:for="{{current.options}}" wx:key="0" data-value="{{item[0]}}" bindtap="select" class="option {{answers[current.key]===item[0]?'selected':''}}"><text>{{item[1]}}</text><text>{{item[2]}}</text></view><view class="row"><button class="secondary" bindtap="back">上一步</button><button class="action next" bindtap="next">{{step===5?'生成结果':'下一题'}} →</button></view></view>
+  </view>
+</view>
