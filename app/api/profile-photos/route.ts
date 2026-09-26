@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   const createdAt = Date.now();
   try {
     await ensureSchema(); const db = sql();
-    const blob = await put(objectKey, file, { access: "public", contentType: file.type, addRandomSuffix: false });
+    const blob = await put(objectKey, file, { access: "private", contentType: file.type, addRandomSuffix: false });
     const filename = file.name.slice(0, 180);
     await db`INSERT INTO profile_photos
       (id, user_id, kind, object_key, filename, content_type, size, created_at)
