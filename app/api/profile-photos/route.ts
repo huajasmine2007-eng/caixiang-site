@@ -8,21 +8,22 @@ const photoKinds = new Set(["full_body", "face_front", "face_left", "face_right"
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxPhotoSize = 8 * 1024 * 1024;
 
-type ClientUploadPayload = { kind: string; filename: string; size: number };
-type UploadTokenPayload = ClientUploadPayload & { id: string; userId: string; createdAt: number };
+type ClientUploadPayload = { id: string; kind: string; filename: string; size: number };
+type UploadTokenPayload = ClientUploadPayload & { userId: string; createdAt: number };
 
 function parseClientPayload(value: string | null | undefined): ClientUploadPayload {
   const payload = JSON.parse(value ?? "") as Partial<ClientUploadPayload>;
+  if (typeof payload.id !== "string" || !/^[0-9a-f-]{36}$/i.test(payload.id)) throw new Error("照片编号无效。");
   if (!payload.kind || !photoKinds.has(payload.kind)) throw new Error("请选择正确的照片位置。");
   if (typeof payload.filename !== "string" || !payload.filename.trim()) throw new Error("无法读取照片名称。");
   if (typeof payload.size !== "number" || payload.size <= 0 || payload.size > maxPhotoSize) throw new Error("单张照片需小于 8MB。");
-  return { kind: payload.kind, filename: payload.filename.slice(0, 180), size: payload.size };
+  return { id: payload.id, kind: payload.kind, filename: payload.filename.slice(0, 180), size: payload.size };
 }
 
 function parseTokenPayload(value: string | null | undefined): UploadTokenPayload {
   const payload = JSON.parse(value ?? "") as Partial<UploadTokenPayload>;
   const client = parseClientPayload(JSON.stringify(payload));
-  if (typeof payload.id !== "string" || typeof payload.userId !== "string" || typeof payload.createdAt !== "number") throw new Error("上传凭证无效。");
+  if (typeof payload.userId !== "string" || typeof payload.createdAt !== "number") throw new Error("上传凭证无效。");
   return { ...client, id: payload.id, userId: payload.userId, createdAt: payload.createdAt };
 }
 
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
           allowedContentTypes: Array.from(allowedTypes),
           maximumSizeInBytes: maxPhotoSize,
           addRandomSuffix: false,
-          tokenPayload: JSON.stringify({ ...payload, id: crypto.randomUUID(), userId, createdAt: Date.now() }),
+          tokenPayload: JSON.stringify({ ...payload, userId, createdAt: Date.now() }),
         };
       },
       onUploadCompleted: async ({ blob, tokenPayload }) => {
