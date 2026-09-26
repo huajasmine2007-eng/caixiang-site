@@ -1,11 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { getSiteUserId } from "@/lib/site-user";
 import { ensureSchema, sql } from "@/lib/postgres";
 
 export const runtime = "nodejs";
 const photoKinds = new Set(["full_body", "face_front", "face_left", "face_right"]);
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const maxPhotoSize = 8 * 1024 * 1024;
+
+type ClientUploadPayload = { kind: string; filename: string; size: number };
+type UploadTokenPayload = ClientUploadPayload & { id: string; userId: string; createdAt: number };
+
+function parseClientPayload(value: string | null | undefined): ClientUploadPayload {
+  const payload = JSON.parse(value ?? "") as Partial<ClientUploadPayload>;
+  if (!payload.kind || !photoKinds.has(payload.kind)) throw new Error("请选择正确的照片位置。");
+  if (typeof payload.filename !== "string" || !payload.filename.trim()) throw new Error("无法读取照片名称。");
+  if (typeof payload.size !== "number" || payload.size <= 0 || payload.size > maxPhotoSize) throw new Error("单张照片需小于 8MB。");
+  return { kind: payload.kind, filename: payload.filename.slice(0, 180), size: payload.size };
+}
+
+function parseTokenPayload(value: string | null | undefined): UploadTokenPayload {
+  const payload = JSON.parse(value ?? "") as Partial<UploadTokenPayload>;
+  const client = parseClientPayload(JSON.stringify(payload));
+  if (typeof payload.id !== "string" || typeof payload.userId !== "string" || typeof payload.createdAt !== "number") throw new Error("上传凭证无效。");
+  return { ...client, id: payload.id, userId: payload.userId, createdAt: payload.createdAt };
+}
 
 function json(body: unknown, status = 200) {
   return NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -28,28 +47,37 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const userId = getSiteUserId(request);
-  if (!userId) return json({ error: "请先登录后上传。" }, 401);
-  let formData: FormData;
-  try { formData = await request.formData(); } catch { return json({ error: "无法读取照片。" }, 400); }
-  const file = formData.get("image");
-  const kind = String(formData.get("kind") ?? "");
-  if (!(file instanceof File) || !photoKinds.has(kind)) return json({ error: "请选择正确的照片位置。" }, 400);
-  if (!allowedTypes.has(file.type)) return json({ error: "仅支持 JPG、PNG、WebP。" }, 415);
-  if (file.size <= 0 || file.size > 8 * 1024 * 1024) return json({ error: "单张照片需小于 8MB。" }, 413);
-  const id = crypto.randomUUID();
-  const objectKey = `profiles/${userId}/${kind}/${id}`;
-  const createdAt = Date.now();
+  let body: HandleUploadBody;
+  try { body = await request.json() as HandleUploadBody; } catch { return json({ error: "无法读取上传请求。" }, 400); }
   try {
-    await ensureSchema(); const db = sql();
-    const blob = await put(objectKey, file, { access: "private", contentType: file.type, addRandomSuffix: false });
-    const filename = file.name.slice(0, 180);
-    await db`INSERT INTO profile_photos
-      (id, user_id, kind, object_key, filename, content_type, size, created_at)
-      VALUES (${id}, ${userId}, ${kind}, ${blob.url}, ${filename}, ${file.type}, ${file.size}, ${createdAt})`;
-    return json({ id, kind, filename: file.name, createdAt }, 201);
+    const response = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        const userId = getSiteUserId(request);
+        if (!userId) throw new Error("请先登录后上传。");
+        const payload = parseClientPayload(clientPayload);
+        if (!pathname.startsWith(`profiles/${payload.kind}/`)) throw new Error("照片位置不正确。");
+        return {
+          allowedContentTypes: Array.from(allowedTypes),
+          maximumSizeInBytes: maxPhotoSize,
+          addRandomSuffix: false,
+          tokenPayload: JSON.stringify({ ...payload, id: crypto.randomUUID(), userId, createdAt: Date.now() }),
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        const payload = parseTokenPayload(tokenPayload);
+        await ensureSchema();
+        const db = sql();
+        await db`INSERT INTO profile_photos
+          (id, user_id, kind, object_key, filename, content_type, size, created_at)
+          VALUES (${payload.id}, ${payload.userId}, ${payload.kind}, ${blob.url}, ${payload.filename}, ${blob.contentType}, ${payload.size}, ${payload.createdAt})
+          ON CONFLICT (id) DO NOTHING`;
+      },
+    });
+    return json(response);
   } catch (error) {
     console.error("profile_photo_upload_failed", error);
-    return json({ error: "照片暂时无法保存，请稍后重试。" }, 503);
+    return json({ error: error instanceof Error ? error.message : "照片暂时无法保存，请稍后重试。" }, 400);
   }
 }

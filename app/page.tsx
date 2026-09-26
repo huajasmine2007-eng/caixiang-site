@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { upload } from "@vercel/blob/client";
 import { ArrowLeft, ArrowRight, Camera, Check, ChevronRight, Database, FileClock, ImagePlus, Images, Ruler, ScanFace, Shirt, Sparkles, Upload, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -96,7 +97,29 @@ function InfoCard({ label, value }: { label: string; value: string }) { return <
 function DigitalProfile() {
   const [uploaded, setUploaded] = useState<Record<string,string>>({}); const [uploading, setUploading] = useState(""); const [message, setMessage] = useState(""); const [products, setProducts] = useState<Product[]>([]);
   useEffect(() => { void fetch("/api/profile-photos", { cache: "no-store" }).then((r) => r.json() as Promise<{ photos?: Array<{kind:string;filename:string}> }>).then((d) => setUploaded(Object.fromEntries((d.photos ?? []).map((p) => [p.kind,p.filename])))).catch(() => undefined); void fetch("/api/recommendations").then((r) => r.json() as Promise<{ products?: Product[] }>).then((d) => setProducts(d.products ?? [])).catch(() => undefined); }, []);
-  async function uploadPhoto(kind: string, file?: File) { if (!file) return; setUploading(kind); setMessage(""); const formData = new FormData(); formData.append("kind", kind); formData.append("image", file); try { const response = await fetch("/api/profile-photos", { method: "POST", body: formData }); const data = await response.json() as { error?: string }; if (!response.ok) throw new Error(data.error); setUploaded({...uploaded,[kind]:file.name}); setMessage("사진이 안전하게 저장되었어요｜照片已保存"); } catch (error) { setMessage(error instanceof Error ? error.message : "上传失败，请稍后重试"); } finally { setUploading(""); } }
+  async function uploadPhoto(kind: string, file?: File) {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { setMessage("仅支持 JPG、PNG、WebP。"); return; }
+    if (file.size <= 0 || file.size > 8 * 1024 * 1024) { setMessage("单张照片需小于 8MB。"); return; }
+    setUploading(kind);
+    setMessage("");
+    const extension = file.type === "image/jpeg" ? "jpg" : file.type === "image/png" ? "png" : "webp";
+    const pathname = `profiles/${kind}/${crypto.randomUUID()}.${extension}`;
+    try {
+      await upload(pathname, file, {
+        access: "private",
+        contentType: file.type,
+        handleUploadUrl: "/api/profile-photos",
+        clientPayload: JSON.stringify({ kind, filename: file.name, size: file.size }),
+      });
+      setUploaded((current) => ({ ...current, [kind]: file.name }));
+      setMessage("사진이 안전하게 저장되었어요｜照片已安全保存");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "上传失败，请稍后重试");
+    } finally {
+      setUploading("");
+    }
+  }
   const complete = photoSlots.filter((slot) => uploaded[slot.kind]).length;
   return <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:py-16"><div className="grid gap-7 lg:grid-cols-[.78fr_1.22fr]"><aside className="rounded-[2rem] bg-[#174ea6] p-7 text-white lg:sticky lg:top-24 lg:h-fit"><p className="text-xs tracking-[.18em] text-white/55">DIGITAL IMAGE PROFILE</p><h1 className="mt-4 font-serif text-4xl"><BiText ko="더 정밀한 디지털 이미지 프로필" zh="更精确的数字形象档案"/></h1><p className="mt-5 leading-7 text-white/65"><BiText ko="전신 비율과 얼굴의 정면·좌·우 윤곽을 함께 확인해 컬러, 골격, 얼굴형과 스타일 결론을 보완합니다." zh="结合全身比例、正脸与左右侧脸，补充色彩、骨骼、脸型与风格结论。"/></p><div className="mt-8 rounded-2xl bg-white/10 p-5"><div className="flex items-center justify-between"><span><BiText ko="사진 완성도" zh="照片完整度"/></span><b>{complete}/4</b></div><Progress value={complete * 25} className="mt-3 h-2"/></div><p className="mt-5 text-xs leading-5 text-white/45"><BiText ko="현재 단계에서는 사진을 안전하게 저장하고 분석 대기 상태로 표시합니다. 시각 모델 API가 연결되면 네 장을 함께 분석합니다." zh="当前版本会安全保存照片并标记为待分析；接入视觉模型后，将联合分析四张照片。"/></p></aside><div><div className="grid gap-4 sm:grid-cols-2">{photoSlots.map((slot) => <label key={slot.kind} className={`relative flex min-h-60 cursor-pointer flex-col justify-between rounded-[1.6rem] border p-6 ${uploaded[slot.kind] ? "border-[#174ea6] bg-[#eef3ff]" : "border-black/10 bg-white"}`}><div className="flex items-start justify-between"><span className="text-[#174ea6] [&_svg]:size-7">{slot.icon}</span>{uploaded[slot.kind] && <Check className="text-[#315b2d]"/>}</div><div><h2 className="font-serif text-2xl"><BiText ko={slot.title} zh={slot.zh}/></h2><p className="mt-3 text-sm leading-6 text-black/45"><BiText ko={slot.note} zh={slot.noteZh}/></p>{uploaded[slot.kind] && <p className="mt-3 truncate text-xs text-[#174ea6]">{uploaded[slot.kind]}</p>}</div><span className="mt-5 flex items-center gap-2 text-sm font-medium"><Upload className="size-4"/>{uploading === slot.kind ? "上传中…" : uploaded[slot.kind] ? "重新上传" : "拍摄或选择照片"}</span><input type="file" className="sr-only" accept="image/jpeg,image/png,image/webp" capture={slot.kind === "full_body" || slot.kind === "face_front" ? "user" : undefined} onChange={(e) => void uploadPhoto(slot.kind,e.target.files?.[0])} disabled={Boolean(uploading)}/></label>)}</div>{message && <p className="mt-4 rounded-2xl bg-[#e9e8e2] p-4 text-sm">{message}</p>}<section className="mt-8"><div className="flex items-end justify-between"><div><p className="text-xs tracking-[.16em] text-[#dd3a3a]">PRODUCT RECOMMENDATIONS</p><h2 className="mt-2 font-serif text-3xl"><BiText ko="첫 번째 추천 상품 데이터베이스" zh="首批推荐商品数据库"/></h2></div><Database className="text-black/25"/></div><p className="mt-3 text-sm text-black/45"><BiText ko="현재 의류·바지는 UNIQLO 데이터로 시작합니다. 색채와 체형 결과가 쌓이면 추천 정확도가 올라가요." zh="当前衣服与裤装先接入 UNIQLO 数据；完成色彩和体型测试后会进一步筛选。"/></p><div className="mt-5 grid gap-3 sm:grid-cols-2">{products.map((p) => <a key={p.id} href={p.productUrl} target="_blank" rel="noreferrer" className="rounded-2xl border border-black/10 bg-white p-5"><div className="flex justify-between text-xs"><span className="font-semibold text-[#dd3a3a]">{p.brand}</span><span className="text-black/35">{p.category.toUpperCase()}</span></div><h3 className="mt-4 font-serif text-xl"><BiText ko={p.nameKo} zh={p.nameZh}/></h3><p className="mt-4 flex items-center justify-between text-sm text-black/45"><span>{p.colorFamily}</span><ArrowRight className="size-4"/></p></a>)}</div></section></div></div></section>;
 }
