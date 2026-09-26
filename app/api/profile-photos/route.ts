@@ -24,7 +24,7 @@ function parseTokenPayload(value: string | null | undefined): UploadTokenPayload
   const payload = JSON.parse(value ?? "") as Partial<UploadTokenPayload>;
   const client = parseClientPayload(JSON.stringify(payload));
   if (typeof payload.userId !== "string" || typeof payload.createdAt !== "number") throw new Error("上传凭证无效。");
-  return { ...client, id: payload.id, userId: payload.userId, createdAt: payload.createdAt };
+  return { ...client, userId: payload.userId, createdAt: payload.createdAt };
 }
 
 function json(body: unknown, status = 200) {
