@@ -29,6 +29,20 @@ export function readSession(request: NextRequest) {
   } catch { return null; }
 }
 
+export function adminPhones() {
+  return (process.env.ADMIN_PHONES ?? "")
+    .split(",")
+    .map((value) => value.replace(/\D/g, ""))
+    .filter((value) => /^1\d{10}$/.test(value));
+}
+
+export function isAdminSession(request: NextRequest) {
+  const session = readSession(request);
+  if (!session || session.role !== "admin") return false;
+  const phone = session.userId.replace(/^phone:\+86/, "");
+  return adminPhones().includes(phone);
+}
+
 export const createApiToken = createSessionValue;
 
 export const sessionCookieName = COOKIE;
