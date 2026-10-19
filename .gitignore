@@ -39,6 +39,8 @@ yarn-error.log*
 next-env.d.ts
 *.tsbuildinfo
 /dist/
+/public/models/yolo11n-pose.onnx
+/public/ort/
 /.wrangler/
 # Checkout-local execution profile and tool state; never publish them.
 /.sites-runtime/
