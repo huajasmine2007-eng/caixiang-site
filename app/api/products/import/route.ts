@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSiteUserId } from "@/lib/site-user";
+import { isAdminSession, readSession } from "@/lib/site-user";
 import { ensureSchema, sql } from "@/lib/postgres";
 
 export const runtime = "nodejs";
@@ -18,8 +18,8 @@ function splitCsvLine(line: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const userId = getSiteUserId(request);
-  if (!userId) return NextResponse.json({ error: "请先登录管理员账户。" }, { status: 401 });
+  if (!isAdminSession(request)) return NextResponse.json({ error: "仅限已配置的管理员导入商品。" }, { status: 403 });
+  const userId = readSession(request)!.userId;
   let formData: FormData;
   try { formData = await request.formData(); } catch { return NextResponse.json({ error: "无法读取文件。" }, { status: 400 }); }
   const file = formData.get("file");
